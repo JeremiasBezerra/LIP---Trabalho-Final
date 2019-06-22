@@ -1,0 +1,470 @@
+#include <iostream> //Biblioteca padrão
+//Bibloitecas usuais
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <ctype.h>
+
+#include <fstream> //Usar arquivos
+#include <cstring> //Manipulação de String
+#include <cstdlib> //Converter String para int
+
+//Valor máximo definido
+#define MAX 512
+#define VMAX 256 //255 + 1 (Para garantir)
+using namespace std;
+
+//Matriz com as cores
+struct pixel
+{
+    int r; //vermelho
+    int g; //verde
+    int b; //azul
+};
+
+//Dados da matriz
+struct Img
+{
+    char P3 [MAX]; //Pega o tipo do arquivo
+    int l; //linhas
+    int c; //colunas
+    pixel mat [MAX][MAX]; //pixel
+};
+
+
+//Funções principais:
+void abre_img(char nome[], Img& img);
+void salva_img(char nome[], Img img);
+
+//Funções escolhidas:
+void converte_para_cinza(Img img_in, Img& img_out);
+void rotaciona(Img img_in, Img& img_out);
+void corta(Img img_in, Img& img_out, int li, int ci, int lf, int cf);
+void equaliza_histograma(Img img_in, Img& img_out);
+
+//Funções extras:
+void separa_canais(Img img_in, Img& img_r, Img& img_g, Img& img_b);
+
+//Função auxilio:
+double somatorio(int v[], int r);
+
+//Funcao mascara:
+void MascaraTipo1(Img img_in, Img& img_out);
+void MascaraTipo2(Img img_in, Img& img_out);
+
+int main(){
+    int escolha = 1; //Escolher a função (Começa em 1 para o algoritmo funcionar sempre e assim repetir o menu)
+    while(escolha!=0){
+
+    //Variaveis
+    char nome1[MAX], nome2[MAX], nome3[MAX], nome4[MAX], nome5[MAX], nome6[MAX], nome7[MAX];
+    Img img_in, img_out, cinza, bw, R, G, B, histog, rotac, masc1, masc2;
+    int li, ci, lf, cf, limite;
+
+    //Menu
+    cout<< "____________________________BEM VINDO____________________________"<<endl;
+    cout << "\t Jeremias Bezerra, Anderson Alexandre, Wilton Verissimo" <<endl;
+    cout<<"\t \t \t \t \t \t  Trabalho de LIP" << endl;
+    cout<<"\t00 - Para sair do programa"<<endl;
+    cout<<"\t01 - Converter para cinza"<<endl;
+    cout<<"\t02 - Rotacionar imagem"<<endl;
+    cout<<"\t03 - Cortar imagem"<<endl;
+    cout<<"\t04 - Equalizacao de histograma"<<endl;
+    cout<<"\t05 - Separa imagem em canais rgb (Extra)"<<endl;
+    cout<<"\t06 - Mascara Horizontal"<<endl;
+    cout<<"\t07 - Mascara Vertical"<<endl;
+    cout<< "__________________________________________________________________"<<endl;
+
+    cout<< "Entre com a funcao desejada: ";
+    cin>>escolha; //Opção de escolher
+    cout << endl;
+
+//Escolha a função desejada
+        switch (escolha)
+        {
+        case 1:
+            //Função Converter para cinza
+            cout << "Entre com o nome do arquivo: "<< endl;
+            cin>>nome1;
+            abre_img(nome1, img_in);
+
+            converte_para_cinza(img_in, cinza);
+            cout<< "Entre com um novo nome para salvar o arquivo:"<<endl;
+            cin>>nome1;
+            salva_img(nome1, cinza);
+            break;
+
+        case 2:
+            //Função rotacionar
+            cout<<"Entre com o nome do arquivo: "<<endl;
+            cin>>nome2;
+
+            abre_img(nome2, img_in);
+            rotaciona(img_in, rotac);
+            cout<<"Entre com um novo nome para salvar o arquivo"<<endl;
+            cin>>nome2;
+            salva_img(nome2, rotac);
+            break;
+
+        case 3:
+            //Função cortar imagem
+            cout << "Entre com o nome do arquivo: "<< endl;
+            cin>>nome3;
+            abre_img(nome3, img_in);
+
+            // Resposta do professor.
+            int Resposta;
+            cout << "Bruno, se desejar entrar no modo randomico, tecle 8 " << endl;
+            cin >> Resposta;
+
+            if(Resposta==8){
+                cout << "Entedido!" << endl;
+                //Randomizar
+                srand (time(NULL)); //Altera os valores sempre que copila o algoritmo
+                li = rand() % 255 + 1;
+                ci = rand() % 255 + 1;
+                lf = rand() % 255 + 1;
+                cf = rand() % 255 + 1;
+            }else{
+            cout << "Entre com os pontos iniciais e finais para cortar a imagem: " << endl;
+            cout << "Linha incial: ";
+            cin >> li;
+            cout << "Coluna incial: ";
+            cin >> ci;
+            cout << "Linha final: ";
+            cin >> lf;
+            cout << "Coluna final: ";
+            cin >> cf;
+            }
+
+            corta(img_in, img_out, li, ci, lf, cf);
+            cout<< "Entre com um novo nome para salvar o arquivo"<<endl;
+            cin>>nome3;
+            salva_img(nome3, img_out);
+            break;
+
+        case 4:
+            //Função Equalizar histograma
+
+            cout<<"Entre com o nome do arquivo: "<<endl;
+            cin>>nome4;
+
+            abre_img(nome4, img_in);
+            equaliza_histograma(img_in, histog);
+            cout<<"Entre com um novo nome para salvar o arquivo"<<endl;
+            cin>>nome4;
+            salva_img(nome4, histog);
+            break;
+
+        case 5:
+            //Função separar canais
+            char nomeR[MAX], nomeG[MAX], nomeB[MAX];
+            cout << "Entre com o nome do arquivo: "<< endl;
+            cin>>nome5;
+            abre_img(nome5, img_in);
+
+            separa_canais(img_in, R, G, B);
+            //Separa o arquivo em cores
+            cout<< "Entre com um novo nome para salvar o arquivo vermelho"<<endl;
+            cin>>nomeR;
+            salva_img(nomeR, R);
+
+            cout<< "Entre com um novo nome para salvar o arquivo verde"<<endl;
+            cin>>nomeG;
+            salva_img(nomeG, G);
+
+            cout<< "Entre com um novo nome para salvar o arquivo azul"<<endl;
+            cin>>nomeB;
+            salva_img(nomeB, B);
+            break;
+
+        case 6:
+            //Função Converter para cinza
+            cout << "Entre com o nome do arquivo: "<< endl;
+            cin>>nome6;
+            abre_img(nome6, img_in);
+
+            MascaraTipo1(img_in, masc1);
+            cout<< "Entre com um novo nome para salvar o arquivo:"<<endl;
+            cin>>nome6;
+            salva_img(nome6, masc1);
+            break;
+
+        case 7:
+            //Função Converter para cinza
+            cout << "Entre com o nome do arquivo: "<< endl;
+            cin>>nome7;
+            abre_img(nome7, img_in);
+
+            MascaraTipo2(img_in, masc2);
+            cout<< "Entre com um novo nome para salvar o arquivo:"<<endl;
+            cin>>nome7;
+            salva_img(nome7, masc2);
+            break;
+        }
+
+        //Limpar a tela dependendo do sistema operacional
+        #if defined(_WIN32) || defined(_WIN64)
+        system("cls");
+        #else defined(__linux__) || defined(__unix__)
+        system("clear");
+        #endif
+    }
+    return 0;
+}
+
+void abre_img(char nome[], Img& img){
+    int PixelMax=0; //Pegar o valor máximo.
+    char Comparar[MAX] = {"P3"}; //Comparar se o arquivo é P3
+    fstream arq;  //Criar variável do tipo fstream
+
+    arq.open(nome); //Abrir arquivo
+    arq >> img.P3;
+    if(strcmp(img.P3, Comparar)==0) //Compara duas strings, Retorna 0 se as strings são iguais
+    {
+        cout<<"Arquivo aberto corretamente"<<endl;
+    }
+    else
+    {
+        cout<<"Erro ao abrir arquivo"<<endl;
+        exit(0); //Fecha o programa
+    }
+    arq >> img.l; //Pegar o valor da linha
+    arq >> img.c; //Pegar o valor da coluna
+    arq >> PixelMax;  //Pegar o valor máximo do pixel
+
+    //Pegar os pixels da imagem
+    for(int i = 0; i < img.c; i++)
+    {
+        for (int j = 0; j < img.l; j++)
+        {
+            arq >> img.mat [i][j].r; //red
+            arq >> img.mat [i][j].g; //green
+            arq >> img.mat [i][j].b; //blue
+        }
+    }
+}
+
+void salva_img(char nome[], Img img_out){
+    ofstream arq; //Salvar arquivo
+    arq.open(nome); //Abrir o arquivo
+    arq << "P3" << endl; //Digitar o tipo do arquivo
+    arq << img_out.l << " " << img_out.c << endl; //Digitar a quantidade de linhas e de coluna do arquivo
+    arq << 255 << endl; //Valor máximo de cada pixel
+
+    //Escreve a matriz de pixel
+    for(int i=0; i < img_out.c; i++)
+    {
+        for (int j=0; j < img_out.l; j++)
+        {
+            arq << img_out.mat [i][j].r << " ";
+            arq << img_out.mat [i][j].g << " ";
+            arq << img_out.mat [i][j].b << " ";
+        }
+        arq << endl;
+    }
+}
+
+void converte_para_cinza(Img img_in, Img& img_out){
+    int i, j;
+    //Percorer a matriz
+    for (i = 0; i < img_in.c; i++)
+    {
+        for (j = 0; j < img_in.l; j++)
+        {   //Média da soma
+            int soma = img_in.mat[i][j].r + img_in.mat[i][j].g + img_in.mat[i][j].b;
+            soma = soma/3;
+            img_out.mat[i][j].r = soma;
+            img_out.mat[i][j].g = soma;
+            img_out.mat[i][j].b = soma;
+        }
+    }
+    img_out.c = img_in.c; //Recebe o valor da coluna
+    img_out.l = img_in.l; //Recebe o valor da linha
+}
+
+void rotaciona(Img img_in, Img& img_out){
+    int i, j, k = img_in.l-1; //K = Linha menos 1
+    for (i = 0; i < img_in.l; i++)
+    {
+        for (j = 0; j < img_in.c; j++)
+        { //Troca a linha pela coluna
+            img_out.mat[i][j].r = img_in.mat[j][k].r;
+            img_out.mat[i][j].g = img_in.mat[j][k].g;
+            img_out.mat[i][j].b = img_in.mat[j][k].b;
+        }
+        k--; //Diminuindo a Linha
+    }
+
+    img_out.c = img_in.l;
+    img_out.l = img_in.c;
+}
+
+void corta(Img img_in, Img& img_out, int li, int ci, int lf, int cf){
+    int i, j, u = 0, v = 0, aux;
+    //i e j para a matriz original e u e v para a cortada.
+    //aux foi criado para trocar uma linha pela outra.
+
+    //Se o usuário se confundir
+    if  (li > lf){
+        aux = lf;
+        lf = li;
+        li = aux;
+    }
+    if (ci > cf){
+        aux = cf;
+        cf = ci;
+        ci = aux;
+    }
+    //Forcando para ter algo a ser copiado
+    if(li<0){
+        li=0;
+    }
+    if(ci<0){
+        ci=0;
+    }
+    if(lf>img_in.l){
+        lf=img_in.l;
+    }
+    if(cf>img_in.c){
+        cf=img_in.c;
+    }
+
+    for (i = ci ; i <cf; i++)
+    {
+        for (j = li; j <lf; j++)
+        {
+            img_out.mat [u][v].r = img_in.mat [i][j].r;
+            img_out.mat [u][v].g = img_in.mat [i][j].g;
+            img_out.mat [u][v].b = img_in.mat [i][j].b;
+            v++;
+        }
+        u++;
+        v=0;
+    }
+    img_out.l = lf-li; //Subtração da imagem original com a parte cortada
+    img_out.c = cf-ci; //Subtração da imagem original com a parte cortada
+}
+
+void equaliza_histograma(Img img_in, Img& img_out){
+    int vr[VMAX]= {0}, vg[VMAX]= {0}, vb[VMAX]= {0};// r,g,b são as cores de cada vetor
+    int i, j;
+    double formula, r1, r2, r3;
+    for(i=0; i<img_in.c; i++)
+    {
+        for(j=0; j<img_in.l; j++)
+        {
+            if(img_in.mat[i][j].r >= 0 && img_in.mat[i][j].r <= 255)
+            {
+                vr[img_in.mat[i][j].r]++;
+            }
+            if(img_in.mat[i][j].g >= 0 && img_in.mat[i][j].g <= 255)
+            {
+                vg[img_in.mat[i][j].g]++;
+            }
+            if(img_in.mat[i][j].b >= 0 && img_in.mat[i][j].b <= 255)
+            {
+                vb[img_in.mat[i][j].b]++;
+            }
+
+        }
+    }
+
+    formula = (255.0/(img_in.l*img_in.c)); //Retirada do material
+
+    for(i=0; i<img_in.c; i++)
+    {
+        for(j=0; j<img_in.l; j++)
+        {
+            r1 = img_in.mat[i][j].r;
+            r2 = img_in.mat[i][j].g;
+            r3 = img_in.mat[i][j].b;
+
+            img_out.mat[i][j].r = formula * (somatorio(vr, r1));
+            img_out.mat[i][j].g = formula * (somatorio(vg, r2));
+            img_out.mat[i][j].b = formula * (somatorio(vb, r3));
+        }
+    }
+    img_out.l=img_in.l;
+    img_out.c=img_in.c;
+}
+
+double somatorio(int v[], int r){
+    //Somar os termos
+    int i;
+    double soma=0;
+    for(i=0; i<r; i++){
+        soma= soma + v[i];
+    }
+    return soma;
+}
+
+void separa_canais(Img img_in, Img& img_r, Img& img_g, Img& img_b){
+    int i, j;
+    for (i = 0; i < img_in.c; i++)
+    {
+        for (j = 0; j < img_in.l; j++)
+        {
+            img_r.mat[i][j].r = img_in.mat[i][j].r; //Separa o canal vermelho
+            img_r.mat[i][j].g = 0;
+            img_r.mat[i][j].b = 0;
+
+            img_g.mat[i][j].r = 0;
+            img_g.mat[i][j].g = img_in.mat[i][j].g; //Separa o canal verde
+            img_g.mat[i][j].b = 0;
+
+            img_b.mat[i][j].b = img_in.mat[i][j].b; //Separa o canal azul
+            img_b.mat[i][j].r = 0;
+            img_b.mat[i][j].g = 0;
+        }
+    }
+    img_r.c = img_in.c; //Vermelho coluna
+    img_r.l = img_in.l; //Vermelho linha
+    img_g.c = img_in.c; //Verde coluna
+    img_g.l = img_in.l; //Verde linha
+    img_b.c = img_in.c; //Azul coluna
+    img_b.l = img_in.l; //Azul linha
+}
+
+void MascaraTipo1(Img img_in, Img& img_out){
+    img_out.l=img_in.l;
+    img_out.c=img_in.c;
+    int i,j;
+    for(i = 0;i<img_in.l;i++){
+        for(j=0;j<img_in.c ;j++){
+             if(j<=img_in.c/2){
+                img_out.mat[i][j].r= img_in.mat[i][j].r;
+                img_out.mat[i][j].g= img_in.mat[i][j].g;
+                img_out.mat[i][j].b= img_in.mat[i][j].b;
+             }else{
+            int soma = img_in.mat[i][j].r + img_in.mat[i][j].g + img_in.mat[i][j].b;
+            soma = soma/3;
+            img_out.mat[i][j].r = soma;
+            img_out.mat[i][j].g = soma;
+            img_out.mat[i][j].b = soma;
+             }
+        }
+    }
+
+}
+
+void MascaraTipo2(Img img_in, Img& img_out){
+    img_out.l=img_in.l;
+    img_out.c=img_in.c;
+    int i,j;
+    for(i = 0;i<img_in.l;i++){
+        for(j=0;j<img_in.c ;j++){
+             if(i<=img_in.l/2){
+                img_out.mat[i][j].r= img_in.mat[i][j].r;
+                img_out.mat[i][j].g= img_in.mat[i][j].g;
+                img_out.mat[i][j].b= img_in.mat[i][j].b;
+             }else{
+            int soma = img_in.mat[i][j].r + img_in.mat[i][j].g + img_in.mat[i][j].b;
+            soma = soma/3;
+            img_out.mat[i][j].r = soma;
+            img_out.mat[i][j].g = soma;
+            img_out.mat[i][j].b = soma;
+             }
+        }
+    }
+}
